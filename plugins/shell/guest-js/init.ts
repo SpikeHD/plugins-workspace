@@ -4,6 +4,21 @@
 
 import { invoke } from '@tauri-apps/api/core'
 
+const discordReg = /https?:\/\/(?:[a-z]+\.)?(?:discord\.com|discordapp\.com)(?:\/.*)?/g
+
+function sameOrigin(a: string, b: string) {
+  const uA = new URL(stripDiscordSubdomain(a))
+  const uB = new URL(stripDiscordSubdomain(b))
+  return uA.origin === uB.origin
+}
+
+function stripDiscordSubdomain(link: string) {
+  // If this isn't a discord link, just return the link
+  if (!link.match(discordReg)) return link
+
+  return link.replace(/canary\.|ptb\.|www\./g, '')
+}
+
 // open <a href="..."> links with the API
 function openLinks(): void {
   document.querySelector('body')?.addEventListener('click', function (e) {
@@ -17,6 +32,7 @@ function openLinks(): void {
             t.href.startsWith(v)
           )
           && t.target === '_blank'
+          && !sameOrigin(t.href, window.location.href)
         ) {
           void invoke('plugin:shell|open', {
             path: t.href
@@ -30,11 +46,17 @@ function openLinks(): void {
   })
 }
 
-if (
-  document.readyState === 'complete'
-  || document.readyState === 'interactive'
-) {
-  openLinks()
-} else {
-  window.addEventListener('DOMContentLoaded', openLinks, true)
+// @ts-expect-error shuddup
+if (window.top === window.self && !window.__SHELL_OPEN__) {
+  // @ts-expect-error shuddup
+  window.__SHELL_OPEN__ = true
+
+  if (
+    document.readyState === 'complete'
+    || document.readyState === 'interactive'
+  ) {
+    openLinks()
+  } else {
+    window.addEventListener('DOMContentLoaded', openLinks, true)
+  }
 }
