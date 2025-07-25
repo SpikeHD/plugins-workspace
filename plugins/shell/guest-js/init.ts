@@ -19,31 +19,37 @@ function stripDiscordSubdomain(link: string) {
   return link.replace(/canary\.|ptb\.|www\./g, '')
 }
 
+function linkHandler(e: MouseEvent) {
+  // Only if middle or left click
+  if (e.button !== 0 && e.button !== 1) return
+
+  let target: HTMLElement | null = e.target as HTMLElement
+  while (target) {
+    if (target.matches('a')) {
+      const t = target as HTMLAnchorElement
+      if (
+        t.href !== ''
+        && ['http://', 'https://', 'mailto:', 'tel:'].some((v) =>
+          t.href.startsWith(v)
+        )
+        && t.target === '_blank'
+        && !sameOrigin(t.href, window.location.href)
+      ) {
+        void invoke('plugin:shell|open', {
+          path: t.href
+        })
+        e.preventDefault()
+      }
+      break
+    }
+    target = target.parentElement
+  }
+}
+
 // open <a href="..."> links with the API
 function openLinks(): void {
-  document.querySelector('body')?.addEventListener('click', function (e) {
-    let target: HTMLElement | null = e.target as HTMLElement
-    while (target) {
-      if (target.matches('a')) {
-        const t = target as HTMLAnchorElement
-        if (
-          t.href !== ''
-          && ['http://', 'https://', 'mailto:', 'tel:'].some((v) =>
-            t.href.startsWith(v)
-          )
-          && t.target === '_blank'
-          && !sameOrigin(t.href, window.location.href)
-        ) {
-          void invoke('plugin:shell|open', {
-            path: t.href
-          })
-          e.preventDefault()
-        }
-        break
-      }
-      target = target.parentElement
-    }
-  })
+  document.querySelector('body')?.addEventListener('click', linkHandler)
+  document.querySelector('body')?.addEventListener('auxclick', linkHandler)
 }
 
 // @ts-expect-error shuddup
