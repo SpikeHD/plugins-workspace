@@ -48,8 +48,8 @@ function linkHandler(e: MouseEvent) {
 
 // open <a href="..."> links with the API
 function openLinks(): void {
-  document.querySelector('body')?.addEventListener('click', linkHandler)
-  document.querySelector('body')?.addEventListener('auxclick', linkHandler)
+  document.querySelector('body')?.addEventListener('click', linkHandler, true)
+  document.querySelector('body')?.addEventListener('auxclick', linkHandler, true)
 }
 
 // @ts-expect-error shuddup
